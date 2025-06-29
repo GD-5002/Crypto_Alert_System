@@ -4,15 +4,15 @@ import requests
 from telegram import Bot
 from telegram_bot import TELEGRAM_TOKEN
 
-# 🌐 Replace with your actual deployed Railway backend URL
-RAILWAY_BACKEND_URL = "https://your-railway-app.up.railway.app/upload"
+# ✅ Use your actual Railway backend here
+RAILWAY_BACKEND_URL = "https://prolific-generosity.up.railway.app/upload"
 CONFIG_FILE = "alert_config.json"
 
 st.set_page_config(page_title="Crypto Alert Configurator", page_icon="📊")
 st.title("📊 Crypto Alert System Setup")
-st.markdown("Configure your coin alerts below:")
+st.markdown("Configure your coin alerts and send them to the backend alert engine.")
 
-# ✅ Enter coins manually
+# ✅ Manual coin input (user-defined)
 user_input = st.text_input(
     "🪙 Enter coin IDs to track (comma-separated, e.g. bitcoin, ethereum):"
 )
@@ -27,33 +27,34 @@ for coin in selected_coins:
     spike = st.text_input(f"Spike alert % for {coin} (optional)", placeholder="e.g., 5", key=f"spike_{coin}")
 
     if min_price == 0.0 and max_price == 0.0:
-        st.warning(f"⚠️ You must enter at least min or max price for {coin}")
+        st.warning(f"⚠️ You must enter at least a min or max price for {coin}")
         continue
 
     coin_alert = {"min": min_price, "max": max_price}
+
     if spike.strip():
         try:
             spike_val = float(spike)
             if spike_val > 0:
                 coin_alert["spike_percent"] = spike_val
         except ValueError:
-            st.warning(f"⚠️ Invalid spike value for {coin}, skipping.")
+            st.warning(f"⚠️ Invalid spike value for {coin}, skipping spike.")
 
     alerts[coin] = coin_alert
 
-# Contact info
+# 📧 Email and Telegram Setup
 st.subheader("📨 Email Alerts")
 email = st.text_input("Your email address", placeholder="you@example.com")
 
 st.subheader("📲 Telegram Alerts")
 chat_id = st.text_input("Your Telegram chat ID")
 
-# Save and upload button
+# 💾 Save & Upload
 if st.button("💾 Save & Upload Alert Configuration"):
     if not selected_coins:
         st.warning("⚠️ Please enter at least one coin ID.")
     elif not alerts:
-        st.warning("⚠️ You must provide valid price range for coins.")
+        st.warning("⚠️ Valid price alert details are required.")
     else:
         config = {
             "email": email if email else None,
@@ -62,31 +63,31 @@ if st.button("💾 Save & Upload Alert Configuration"):
         }
 
         try:
-            # Optional: save locally for download
+            # Save config locally
             with open(CONFIG_FILE, "w") as f:
                 json.dump(config, f, indent=2)
-            st.success("✅ Configuration saved locally!")
+            st.success("✅ Configuration saved locally.")
 
-            # 🔔 Telegram test
+            # 📲 Optional Telegram test
             if chat_id:
                 try:
                     bot = Bot(token=TELEGRAM_TOKEN)
                     bot.send_message(chat_id=chat_id, text="✅ Telegram alert setup successful!")
                     st.success("📲 Telegram test message sent.")
                 except Exception:
-                    st.warning("⚠️ Failed to send Telegram test message. Have you messaged the bot?")
+                    st.warning("⚠️ Failed to send Telegram test message. Did you message the bot first?")
 
-            # 📡 Upload to backend (Railway)
+            # 🌐 Upload config to Railway backend
             try:
-                response = requests.post(RAILWAY_BACKEND_URL, json=config)
-                if response.status_code == 200:
-                    st.success("🚀 Configuration uploaded to alert engine!")
+                res = requests.post(RAILWAY_BACKEND_URL, json=config)
+                if res.status_code == 200:
+                    st.success("🚀 Configuration uploaded to alert engine successfully!")
                 else:
-                    st.warning(f"⚠️ Upload failed: {response.text}")
+                    st.warning(f"⚠️ Upload failed: {res.status_code} - {res.text}")
             except Exception as e:
                 st.error(f"❌ Failed to send config to backend: {e}")
 
-            # 💾 Download config
+            # 📥 Download config
             st.download_button(
                 label="⬇️ Download alert_config.json",
                 data=json.dumps(config, indent=2),
@@ -95,4 +96,4 @@ if st.button("💾 Save & Upload Alert Configuration"):
             )
 
         except Exception as e:
-            st.error(f"❌ Error saving config: {e}")
+            st.error(f"❌ Error saving configuration: {e}")
