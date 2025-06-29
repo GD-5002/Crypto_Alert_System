@@ -1,0 +1,2 @@
+# config.py
+CURRENCY = 'usd'

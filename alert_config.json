@@ -1,0 +1,11 @@
+{
+  "email": "dheerajgogula05@gmail.com",
+  "telegram_chat_id": "6846071743",
+  "alerts": {
+    "bitcoin": {
+      "min": 0.0,
+      "max": 1e+18,
+      "spike_percent": 1.0
+    }
+  }
+}
